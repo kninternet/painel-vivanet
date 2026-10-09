@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Busca from './Busca'
 
 /* ------------------------------------------------------------------ tipos da ficha (gateway) */
 interface Fatura { fatura_id: number; vencimento: string; valor: number; link_boleto: string | null; linha_digitavel: string | null; pix: string | null; vencida: boolean; dias_atraso: number }
@@ -131,6 +132,14 @@ export default function Painel({ atendente }: { atendente: string }) {
 
   const marcar = (chave: string) => { setFeito(chave); setTimeout(() => setFeito((f) => (f === chave ? null : f)), 1600) }
   const mostrarAviso = (t: string) => { setAviso(t); setTimeout(() => setAviso(''), 3000) }
+  function abrir(id: number) {
+    setSemContrato(false); setFicha(null); setErro(''); setContrato(id)
+    const u = new URL(window.location.href); u.searchParams.set('contrato', String(id)); window.history.replaceState(null, '', u)
+  }
+  function novaBusca() {
+    setContrato(null); setFicha(null); setErro('')
+    const u = new URL(window.location.href); u.searchParams.delete('contrato'); window.history.replaceState(null, '', u)
+  }
   async function copiar(chave: string, t?: string | null) { if (t && (await copiarTexto(t))) marcar(chave) }
   async function enviarFatura(f: Fatura) {
     if (!ficha) return
@@ -157,10 +166,10 @@ export default function Painel({ atendente }: { atendente: string }) {
 
   /* ---------- estados sem ficha */
   const Moldura = ({ children }: { children: React.ReactNode }) => <div className="corpo"><div className="aviso">{children}</div></div>
-  if (semContrato) return <Moldura>Este contato ainda não tem contrato no painel. Peça ao cliente o CPF ou CNPJ: quando o Vitor identificar, a ficha aparece aqui.</Moldura>
-  if (!contrato) return <Moldura>Abra uma conversa para ver a ficha do cliente.</Moldura>
+  if (semContrato && !contrato) return <Busca onAbrir={abrir} aviso="Este contato ainda não tem contrato no painel. Busque pelo CPF/CNPJ ou pelo número do contrato." />
+  if (!contrato) return <Busca onAbrir={abrir} />
   if (carregando && !ficha) return <Moldura>Carregando a ficha do contrato {contrato}…</Moldura>
-  if (erro && !ficha) return <Moldura>{erro} <button className="btn peq" onClick={() => carregar(contrato)}>Tentar de novo</button></Moldura>
+  if (erro && !ficha) return <Moldura>{erro} <button className="btn peq" onClick={() => carregar(contrato)}>Tentar de novo</button> <button className="btn peq" onClick={novaBusca}>Nova busca</button></Moldura>
   if (!ficha) return null
 
   const S = ficha.situacao
@@ -192,6 +201,7 @@ export default function Painel({ atendente }: { atendente: string }) {
             <div className="suave">Contrato {ficha.contrato.id} · {plano(ficha.contrato.plano)}{ficha.contrato.pop ? ` · ${ficha.contrato.pop}` : ''}</div>
           </div>
           <button className="btn peq" style={{ height: 44 }} onClick={() => copiar('contrato', String(ficha.contrato.id))}>{feito === 'contrato' ? 'Copiado' : String(ficha.contrato.id)}</button>
+          <button className="btn peq" style={{ height: 44 }} onClick={novaBusca}>Nova busca</button>
         </div>
         <div className="grade3">
           {card('Contrato', S.contrato.problema, S.contrato.texto ?? '—', S.contrato.motivo ?? (ficha.cliente?.data_cadastro ? `desde ${ficha.cliente.data_cadastro.slice(0, 4)}` : ''))}
