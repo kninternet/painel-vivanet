@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Conectar WhatsApp Business · Viva Net</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #0E0F22; color: #E7E8F7; display: flex; justify-content: center; }
+  main { max-width: 520px; padding: 32px 20px; display: flex; flex-direction: column; gap: 16px; }
+  h1 { font-size: 20px; margin: 0; color: #fff; }
+  p, li { color: #A9ABD0; line-height: 1.5; }
+  button { height: 48px; border: none; border-radius: 10px; background: #4043B1; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  pre { background: #15163A; border: 1px solid #26285A; border-radius: 10px; padding: 12px; white-space: pre-wrap; word-break: break-all; color: #DCDDFB; font-size: 12px; min-height: 40px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Conectar o WhatsApp Business da Viva Net à plataforma</h1>
+  <p>Este botão abre o cadastro da Meta no modo de coexistência. Escolha <strong>"Conectar o aplicativo WhatsApp Business existente"</strong>, informe o número e, quando o QR code aparecer, leia com o WhatsApp Business do celular exclusivo (pela mensagem que chega no aplicativo).</p>
+  <ol>
+    <li>Use a mesma conta do Facebook que administra o app e o portfólio da Viva Net.</li>
+    <li>Não deixe a janela aberta por mais de 1 hora.</li>
+    <li>Ao terminar, copie o resultado abaixo e mande para o Claude.</li>
+  </ol>
+  <button id="btn" disabled>Carregando…</button>
+  <pre id="saida"></pre>
+</main>
+<script>
+  const APP_ID = '1394434402404368';
+  const CONFIG_ID = new URLSearchParams(location.search).get('config');
+  const saida = document.getElementById('saida'), btn = document.getElementById('btn');
+  const log = (t) => { saida.textContent += t + '\n'; };
+  if (!CONFIG_ID) log('Falta o ID da configuração no endereço: ?config=SEU_ID');
+
+  // Eventos do cadastro (ids do número e da conta, etapa de abandono).
+  window.addEventListener('message', (e) => {
+    if (!/facebook\.com$/.test(new URL(e.origin).hostname)) return;
+    try {
+      const d = JSON.parse(e.data);
+      if (d.type === 'WA_EMBEDDED_SIGNUP') log('Resultado: ' + JSON.stringify({ evento: d.event, ...d.data }));
+    } catch (_) { /* outras mensagens da Meta */ }
+  });
+
+  window.fbAsyncInit = function () {
+    FB.init({ appId: APP_ID, autoLogAppEvents: true, xfbml: false, version: 'v21.0' });
+    btn.disabled = !CONFIG_ID; btn.textContent = 'Conectar WhatsApp Business';
+  };
+  btn.onclick = () => FB.login((r) => {
+    log(r.authResponse ? 'Cadastro concluído na Meta.' : 'Cadastro cancelado ou não concluído.');
+  }, {
+    config_id: CONFIG_ID,
+    response_type: 'code',
+    override_default_response_type: true,
+    extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: '3' },
+  });
+</script>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/pt_BR/sdk.js"></script>
+</body>
+</html>
