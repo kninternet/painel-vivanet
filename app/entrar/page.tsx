@@ -9,7 +9,8 @@ export default function Entrar() {
     const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) })
     const j = await r.json().catch(() => ({}))
     setEnviando(false)
-    if (r.ok) window.location.href = '/'
+    const voltar = new URLSearchParams(window.location.search).get('voltar') ?? '/'
+    if (r.ok) window.location.href = voltar.startsWith('/') && !voltar.startsWith('//') ? voltar : '/'
     else setErro(j.erro ?? 'Não foi possível entrar.')
   }
   const campo: React.CSSProperties = { height: 44, borderRadius: 10, border: '1px solid var(--borda-forte)', background: 'var(--cartao)', color: '#fff', padding: '0 12px', fontSize: 14, width: '100%' }
