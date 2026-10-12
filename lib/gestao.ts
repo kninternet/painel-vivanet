@@ -7,7 +7,7 @@ import { chatwootDb, gatewayDb } from './bancos'
  *   (com ação: mandou boleto, PIX, e-mail ou concluiu cadastro; senão, só conversa)
  * - encerrada automaticamente: tem a nota "Conversa encerrada automaticamente"
  * - departamento: pelas etiquetas (suporte, financeiro; o resto é atendimento)
- * - expediente: seg a sex 9h-18h; sáb, dom e feriados 9h-14h (America/Sao_Paulo)
+ * - expediente (mensagens): seg a sex 9h-22h; sábado 9h-16h; domingo e feriados sem atendimento humano
  */
 const SUPORTE = ['sem_conexao', 'internet_lenta', 'outros_conexao', 'troca_de_roteador', 'troca_de_senha']
 const FINANCEIRO = ['baixa_pagamento', 'liberacao_internet', 'outros_financeiro', 'pagamentos']
@@ -37,10 +37,12 @@ const sp = (d: Date) => {
     .formatToParts(d).map((x) => [x.type, x.value]))
   return { dia: `${p.year}-${p.month}-${p.day}`, hora: Number(p.hour) % 24, semana: p.weekday as string }
 }
+// Atendimento humano por mensagens: seg a sex 9h-22h; sábado 9h-16h; domingo e feriados sem atendimento humano.
+const HORARIO: Record<string, [number, number] | null> = { Sun: null, Mon: [9, 22], Tue: [9, 22], Wed: [9, 22], Thu: [9, 22], Fri: [9, 22], Sat: [9, 16] }
 const noExpediente = (d: Date) => {
   const { dia, hora, semana } = sp(d)
-  const curto = semana === 'Sat' || semana === 'Sun' || FERIADOS.has(dia)
-  return hora >= 9 && hora < (curto ? 14 : 18)
+  const j = FERIADOS.has(dia) ? null : HORARIO[semana]
+  return !!j && hora >= j[0] && hora < j[1]
 }
 const mediana = (xs: number[]) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b); return s[Math.floor(s.length / 2)] }
 const min = (a: Date | null, b: Date | null) => (a && b ? (b.getTime() - a.getTime()) / 60000 : null)

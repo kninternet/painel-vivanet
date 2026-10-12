@@ -114,11 +114,11 @@ export default function Gestao() {
         <section><h2>A equipe depois da transferência</h2><div className="g-grade">
           {card('Espera até a 1ª resposta humana', tempo(r.equipe.espera_min), 'Mediana, depois da transferência')}
           {card('Sem resposta da equipe', num(r.equipe.sem_resposta.length), r.equipe.sem_resposta.length ? <Links ids={r.equipe.sem_resposta} max={10} /> : 'Nenhuma no período', r.equipe.sem_resposta.length > 0)}
-          {card('Transferidas fora do expediente', num(r.equipe.fora_expediente), 'Seg a sex 9h-18h · sáb, dom e feriados 9h-14h')}
+          {card('Transferidas fora do expediente', num(r.equipe.fora_expediente), 'Seg a sex 9h-22h · sáb 9h-16h · dom e feriados sem equipe')}
         </div>
         <div className="g-grade2">
-          <div className="g-card"><h3>Conversas por hora do dia</h3><span className="suave">Faixa sombreada: fora do expediente de dia útil</span>
-            <Colunas dados={r.por_hora.map((h) => ({ rotulo: h.hora + 'h', valores: [h.conversas] }))} legenda={[['Conversas', 'var(--indigo)']]} sombra={(i) => i < 9 || i >= 18} /></div>
+          <div className="g-card"><h3>Conversas por hora do dia</h3><span className="suave">Faixa sombreada: fora do expediente de dia útil (antes das 9h e depois das 22h)</span>
+            <Colunas dados={r.por_hora.map((h) => ({ rotulo: h.hora + 'h', valores: [h.conversas] }))} legenda={[['Conversas', 'var(--indigo)']]} sombra={(i) => i < 9 || i >= 22} /></div>
           <div className="g-card"><h3>Por atendente</h3><span className="suave">Conversas respondidas, 1ª resposta e tempo até resolver (medianas)</span>
             {r.equipe.atendentes.length ? <table className="g-tab"><thead><tr><th>Atendente</th><th className="n">Conversas</th><th className="n">1ª resposta</th><th className="n">Até resolver</th></tr></thead>
               <tbody>{r.equipe.atendentes.map((a) => <tr key={a.atendente}><td>{a.atendente}</td><td className="n">{num(a.conversas)}</td><td className="n">{tempo(a.primeira_resposta_min)}</td><td className="n">{tempo(a.resolucao_min)}</td></tr>)}</tbody></table>
